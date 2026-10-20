@@ -15,3 +15,6 @@ verify: ## Deploy and verify the hook on Etherscan
 	  --rpc-url $(MAINNET_RPC_URL) \
 	  --broadcast \
 	  --verify
+
+coverage: ## Generates lcov.info at the project root
+	forge coverage --report lcov --report-file lcov.info

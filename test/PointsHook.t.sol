@@ -16,7 +16,7 @@ import {PoolId} from "v4-core/types/PoolId.sol";
 
 import {Hooks} from "v4-core/libraries/Hooks.sol";
 import {TickMath} from "v4-core/libraries/TickMath.sol";
-import {SqrtPriceMath} from "v4-core/libraries/SqrtPriceMath.sol";
+// import {SqrtPriceMath} from "v4-core/libraries/SqrtPriceMath.sol";
 import {LiquidityAmounts} from "@uniswap/v4-core/test/utils/LiquidityAmounts.sol";
 
 import {ERC1155TokenReceiver} from "solmate/src/tokens/ERC1155.sol";
@@ -58,7 +58,7 @@ contract TestPointsHook is Test, Deployers, ERC1155TokenReceiver {
         token.approve(address(modifyLiquidityRouter), type(uint256).max);
 
         // Initialize a pool
-        (key, ) = initPool(
+        (key,) = initPool(
             ethCurrency, // Currency 0 = ETH
             tokenCurrency, // Currency 1 = TOKEN
             hook, // Hook Contract
@@ -71,24 +71,14 @@ contract TestPointsHook is Test, Deployers, ERC1155TokenReceiver {
         uint160 sqrtPriceAtTickUpper = TickMath.getSqrtPriceAtTick(60);
 
         uint256 ethToAdd = 0.1 ether;
-        uint128 liquidityDelta = LiquidityAmounts.getLiquidityForAmount0(
-            SQRT_PRICE_1_1,
-            sqrtPriceAtTickUpper,
-            ethToAdd
-        );
-        uint256 tokenToAdd = LiquidityAmounts.getAmount1ForLiquidity(
-            sqrtPriceAtTickLower,
-            SQRT_PRICE_1_1,
-            liquidityDelta
-        );
+        uint128 liquidityDelta = LiquidityAmounts.getLiquidityForAmount0(SQRT_PRICE_1_1, sqrtPriceAtTickUpper, ethToAdd);
+        uint256 tokenToAdd =
+            LiquidityAmounts.getAmount1ForLiquidity(sqrtPriceAtTickLower, SQRT_PRICE_1_1, liquidityDelta);
 
         modifyLiquidityRouter.modifyLiquidity{value: ethToAdd}(
             key,
             ModifyLiquidityParams({
-                tickLower: -60,
-                tickUpper: 60,
-                liquidityDelta: int256(uint256(liquidityDelta)),
-                salt: bytes32(0)
+                tickLower: -60, tickUpper: 60, liquidityDelta: int256(uint256(liquidityDelta)), salt: bytes32(0)
             }),
             ZERO_BYTES
         );
@@ -96,10 +86,7 @@ contract TestPointsHook is Test, Deployers, ERC1155TokenReceiver {
 
     function test_swap() public {
         uint256 poolIdUint = uint256(PoolId.unwrap(key.toId()));
-        uint256 pointsBalanceOriginal = hook.balanceOf(
-            address(this),
-            poolIdUint
-        );
+        uint256 pointsBalanceOriginal = hook.balanceOf(address(this), poolIdUint);
 
         // Set user address in hook data
         bytes memory hookData = abi.encode(address(this));
@@ -115,16 +102,10 @@ contract TestPointsHook is Test, Deployers, ERC1155TokenReceiver {
                 amountSpecified: -0.001 ether, // Exact input for output swap
                 sqrtPriceLimitX96: TickMath.MIN_SQRT_PRICE + 1
             }),
-            PoolSwapTest.TestSettings({
-                takeClaims: false,
-                settleUsingBurn: false
-            }),
+            PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
             hookData
         );
-        uint256 pointsBalanceAfterSwap = hook.balanceOf(
-            address(this),
-            poolIdUint
-        );
+        uint256 pointsBalanceAfterSwap = hook.balanceOf(address(this), poolIdUint);
         assertEq(pointsBalanceAfterSwap - pointsBalanceOriginal, 2 * 10 ** 14);
     }
 }

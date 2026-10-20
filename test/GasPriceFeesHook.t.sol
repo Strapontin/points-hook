@@ -48,7 +48,9 @@ contract TestGasPriceFeesHook is Test, Deployers {
         // Add some liquidity
         modifyLiquidityRouter.modifyLiquidity(
             key,
-            ModifyLiquidityParams({tickLower: -60, tickUpper: 60, liquidityDelta: 100 ether, salt: bytes32(0)}),
+            ModifyLiquidityParams({
+                tickLower: -60 * 1000, tickUpper: 60 * 20, liquidityDelta: 100 ether, salt: bytes32(0)
+            }),
             ZERO_BYTES
         );
     }
